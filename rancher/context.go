@@ -18,16 +18,17 @@ import (
 type Context struct {
 	project.Context
 
-	RancherConfig      map[string]RancherConfig
-	RancherComposeFile string
-	Url                string
-	AccessKey          string
-	SecretKey          string
-	Client             *rancherClient.RancherClient
-	Environment        *rancherClient.Environment
-	isOpen             bool
-	SidekickInfo       *SidekickInfo
-	Uploader           Uploader
+	RancherConfig       map[string]RancherConfig
+	RancherComposeFile  string
+	RancherComposeBytes []byte
+	Url                 string
+	AccessKey           string
+	SecretKey           string
+	Client              *rancherClient.RancherClient
+	Environment         *rancherClient.Environment
+	isOpen              bool
+	SidekickInfo        *SidekickInfo
+	Uploader            Uploader
 }
 
 type RancherConfig struct {
@@ -39,7 +40,7 @@ type RancherConfig struct {
 }
 
 func (c *Context) readRancherConfig() error {
-	if c.RancherComposeFile == "" {
+	if c.RancherComposeBytes == nil && c.RancherComposeFile == "" && c.ComposeFile != "" {
 		f, err := filepath.Abs(c.ComposeFile)
 		if err != nil {
 			return err
@@ -48,17 +49,20 @@ func (c *Context) readRancherConfig() error {
 		c.RancherComposeFile = path.Join(path.Dir(f), "rancher-compose.yml")
 	}
 
-	logrus.Debugf("Opening rancher-compose file: %s", c.RancherComposeFile)
-
-	if composeBytes, err := ioutil.ReadFile(c.RancherComposeFile); os.IsNotExist(err) {
-		logrus.Debugf("Not found: %s", c.RancherComposeFile)
-		return nil
-	} else if err != nil {
-		logrus.Errorf("Failed to open %s", c.RancherComposeFile)
-		return err
-	} else {
-		return yaml.Unmarshal(composeBytes, &c.RancherConfig)
+	if c.RancherComposeBytes == nil {
+		logrus.Debugf("Opening rancher-compose file: %s", c.RancherComposeFile)
+		if composeBytes, err := ioutil.ReadFile(c.RancherComposeFile); os.IsNotExist(err) {
+			logrus.Debugf("Not found: %s", c.RancherComposeFile)
+			return nil
+		} else if err != nil {
+			logrus.Errorf("Failed to open %s", c.RancherComposeFile)
+			return err
+		} else {
+			c.RancherComposeBytes = composeBytes
+		}
 	}
+
+	return yaml.Unmarshal(c.RancherComposeBytes, &c.RancherConfig)
 }
 
 func (c *Context) open() error {
@@ -93,6 +97,10 @@ func (c *Context) open() error {
 }
 
 func (c *Context) loadEnv() error {
+	if c.Environment != nil {
+		return nil
+	}
+
 	envs, err := c.Client.Environment.List(&rancherClient.ListOpts{
 		Filters: map[string]interface{}{
 			"name":         c.ProjectName,

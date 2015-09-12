@@ -9,6 +9,8 @@ type Service struct {
 
 	AccountId string `json:"accountId,omitempty" yaml:"account_id,omitempty"`
 
+	CreateIndex int64 `json:"createIndex,omitempty" yaml:"create_index,omitempty"`
+
 	Created string `json:"created,omitempty" yaml:"created,omitempty"`
 
 	Data map[string]interface{} `json:"data,omitempty" yaml:"data,omitempty"`
@@ -30,6 +32,8 @@ type Service struct {
 	Scale int64 `json:"scale,omitempty" yaml:"scale,omitempty"`
 
 	SecondaryLaunchConfigs []interface{} `json:"secondaryLaunchConfigs,omitempty" yaml:"secondary_launch_configs,omitempty"`
+
+	ServiceSchemas map[string]interface{} `json:"serviceSchemas,omitempty" yaml:"service_schemas,omitempty"`
 
 	State string `json:"state,omitempty" yaml:"state,omitempty"`
 

@@ -37,6 +37,7 @@ type RancherConfig struct {
 	ExternalIps        []string                           `yaml:"external_ips,omitempty"`
 	Hostname           string                             `yaml:"hostname,omitempty"`
 	HealthCheck        *rancherClient.InstanceHealthCheck `yaml:"health_check,omitempty"`
+	ServiceSchemas     map[string]rancherClient.Schema    `yaml:"service_schemas,omitempty"`
 }
 
 func (c *Context) readRancherConfig() error {

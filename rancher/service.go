@@ -294,7 +294,7 @@ func (r *RancherService) createLbService() (*rancherClient.Service, error) {
 	return r.findExisting(r.name)
 }
 
-func (r *RancherService) createNormalService() (*rancherClient.Service, error) {
+func (r *RancherService) createNormalService(rancherConfig RancherConfig) (*rancherClient.Service, error) {
 	secondaryLaunchConfigs := []interface{}{}
 
 	launchConfig, err := r.createLaunchConfig(r.serviceConfig)
@@ -322,12 +322,22 @@ func (r *RancherService) createNormalService() (*rancherClient.Service, error) {
 		}
 	}
 
+	fmt.Printf("%s !! %#v\n", r.name, rancherConfig.ServiceSchemas)
+
+	serviceSchemas := map[string]interface{}{}
+	for k, v := range rancherConfig.ServiceSchemas {
+		serviceSchemas[k] = v
+	}
+
+	fmt.Printf("%s %#v\n", r.name, serviceSchemas)
+
 	return r.context.Client.Service.Create(&rancherClient.Service{
 		Name:                   r.name,
 		LaunchConfig:           launchConfig,
 		SecondaryLaunchConfigs: secondaryLaunchConfigs,
-		Scale:         int64(r.getConfiguredScale()),
-		EnvironmentId: r.context.Environment.Id,
+		Scale:          int64(r.getConfiguredScale()),
+		EnvironmentId:  r.context.Environment.Id,
+		ServiceSchemas: serviceSchemas,
 	})
 }
 
@@ -364,7 +374,7 @@ func (r *RancherService) createService() (*rancherClient.Service, error) {
 	} else if r.serviceConfig.Image == DNS_IMAGE {
 		service, err = r.createDnsService()
 	} else {
-		service, err = r.createNormalService()
+		service, err = r.createNormalService(rancherConfig)
 	}
 
 	if err != nil {
